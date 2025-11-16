@@ -1392,8 +1392,8 @@ MonoBehaviour:
   - {fileID: 1729678234941400477, guid: 2b420ea2c9cbe0541918775ff61c01a3, type: 3}
   - {fileID: 8401762168981466688, guid: cfd29481296406a489528136d5f671c2, type: 3}
   - {fileID: 3786540212861104021, guid: 9adee29f16a2047429d63877983811a3, type: 3}
-  - {fileID: 5450215053607968119, guid: d9d016ece31495e46b3d8efc9946ba53, type: 3}
   - {fileID: 3704935901341027245, guid: c10d69abe98eed44d97bb7b567794c8f, type: 3}
+  LastMap: {fileID: 5450215053607968119, guid: d9d016ece31495e46b3d8efc9946ba53, type: 3}
   playerPrefab: {fileID: 1865938915375051437, guid: 3c02ac99ebd71b24cb0f7c53261c4241, type: 3}
   playerSpawn: {x: 0, y: 0, z: 0}
   MapHeight: 16.5

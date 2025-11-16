@@ -18,16 +18,19 @@ public class ItemData
 
 public class StageManager : MonoBehaviour
 {
+    private int mapCount = 0;
     //맵 생성을 위한 프리팹 지정
     [Header("StartingMap")]
     public GameObject StartingMap;
     [Header("Candidate")]
     public List<GameObject> OtherPreset;
+    [Header("Last")]
+    public GameObject LastMap;
     //씬에서 동작할 플레이어 프리팹 지정
     [Header("Player")]
     public GameObject playerPrefab;
     public Vector3 playerSpawn = new Vector3(0f, 0f, 0f);
-    //public CinemachineVirtualCamera vcam;
+    //public CinemachineVirtualCamera vcam; // Cinemachine 문제 고쳐지면 주석 해제
 
     //맵 생성 위치 결정을 위한 맵의 크기와 다음 맵 생성 위치변수. Y축만 고려. X축 필요 시 추가
     [Header("Map Height")]
@@ -68,12 +71,19 @@ public class StageManager : MonoBehaviour
     //반환값: X
     public void GetItem(ItemData item)
     {
-        if(true) tmpinventory.Add(item); // 멀티플레이 구현 시 동기화 처리해야
+        if(item.id != "clear") tmpinventory.Add(item); // 멀티플레이 구현 시 동기화 처리해야
         Debug.Log(item.id + " 획득");
 
-        if (item.id == "key") CheckTrigger = true;
+        if (item.id == "tmp") CheckTrigger = true; // id는 임시. 나중에 ItemData 클래스와 함께 수정 필요
+        if (item.id == "clear") // 클리어 처리 테스트용. "clear" id를 가진 아이템 필요
+        {
+            ClearAssurance(true);
+            StageClear(true); 
+        }
+    
     }
-    /*
+
+    /* 합칠 때 주석 해제
     private void OnEnable()
     {
         // 다른 스크립트의 이벤트 구독
@@ -84,16 +94,18 @@ public class StageManager : MonoBehaviour
         enemy.OnDeath += StageClear;
     }
     */
+
     void Start()
     {
         IsClear = false;
-        /*
+        mapCount += 1;
+        /* Cinemachine 문제 고쳐지면 주석해제
         //시작 맵 불러오기
         if (StartingMap != null)
         {
             Instantiate(StartingMap, Vector3.zero, Quaternion.identity);
             //다음 맵이 생성될 위치 조정
-            nextMapY = -(MapHeight / 2);
+            nextMapY = -MapHeight;
             Debug.Log("StartingMap Called");
         }
         else Debug.LogError("StartingMap Required");
@@ -103,8 +115,8 @@ public class StageManager : MonoBehaviour
         {
             GameObject SpawnedPlayer = Instantiate(playerPrefab, playerSpawn, Quaternion.identity);
             Debug.Log("Player Spawned");
-            //vcam.Follow = SpawnedPlayer.transform;
-            //vcam.LookAt = SpawnedPlayer.transform;
+            vcam.Follow = SpawnedPlayer.transform;
+            vcam.LookAt = SpawnedPlayer.transform;
         }
         else Debug.Log("Player Setting Required");
         */
@@ -118,37 +130,38 @@ public class StageManager : MonoBehaviour
     //반환값: X
     public void SpawnRandomMap()
     {
+        mapCount += 1;
         //랜덤 프리셋이 없을 경우 리턴
         if (OtherPreset.Count == 0)
         {
             Debug.Log("RandomMap Required"); return;
         }
+        // 5번째 맵이 마지막
+        if(mapCount == 5)
+        {
+            Vector3 SpawnLoc = new Vector3(0, nextMapY, 0);
+            Instantiate(LastMap, SpawnLoc, Quaternion.identity);
+            Debug.Log("Last Map");
+            nextMapY = nextMapY - 1242148 * MapHeight;
+        }
 
-        //랜덤 프리셋의 맵 결정. 이후에 랜덤 관련 보정 필요
-        int MapIndex = Random.Range(0, OtherPreset.Count);
-        GameObject SelectedMap = OtherPreset[MapIndex];
-        
-        //선택된 맵을 정해진 위치에 생성
-        Vector3 SpawnLoc = new Vector3(0, nextMapY, 0);
-        Instantiate(SelectedMap, SpawnLoc, Quaternion.identity);
+        else
+        {
+            //랜덤 프리셋의 맵 결정. 이후에 랜덤 관련 보정 필요
+            int MapIndex = Random.Range(0, OtherPreset.Count);
+            GameObject SelectedMap = OtherPreset[MapIndex];
 
-        //다음 맵이 생성될 위치 조정
-        nextMapY -= MapHeight;
-        Debug.Log("nextMapY: " + nextMapY);
+            //선택된 맵을 정해진 위치에 생성
+            Vector3 SpawnLoc = new Vector3(0, nextMapY, 0);
+            Instantiate(SelectedMap, SpawnLoc, Quaternion.identity);
+
+            //다음 맵이 생성될 위치 조정
+            nextMapY -= MapHeight;
+            Debug.Log("nextMapY: " + nextMapY);
+        }
+
+ 
     }
-
-    //함수 이름: CalcPoint
-    //기능: 적을 처치했을 때 점수와 획득골드를 받아와서 처리하는 함수
-    //파라미터: int score -> 해당 스테이지의 점수 증가량
-    //          Item gold -> 임시 인벤토리에 보관될 골드
-    //반환값: X (이벤트를 구독하는 스크립트에게 스테이지 점수를 전달)
-    public void CalcPoint(int score, ItemData gold)
-    {
-        tmpinventory.Add(gold);
-        StageScore += score;
-        OnAddScore?.Invoke(StageScore);
-    }
-   
 
     //함수 이름: ClearAssurance
     //기능: 클리어 조건을 전부 충족시키는 함수
@@ -156,11 +169,26 @@ public class StageManager : MonoBehaviour
     //반환값: X
     public void ClearAssurance(bool boss)
     {
-        if(boss) {
+        if (boss)
+        {
             IsClear = true; CheckTrigger = true;
         }
         Debug.Log("Meet Clear Condition");
     }
+
+
+    /* 이 이하는 이벤트 체이닝으로, 나중에 합칠 때 인자, 기능 수정 필요 */
+
+    //함수 이름: CalcPoint
+    //기능: 적을 처치했을 때 점수와 획득골드를 받아와서 처리하는 함수
+    //파라미터: int score -> 해당 스테이지의 점수 증가량
+    //반환값: X (이벤트를 구독하는 스크립트에게 스테이지 점수를 전달)
+    public void CalcPoint(int score)
+    {
+        StageScore += score;
+        OnAddScore?.Invoke(StageScore);
+    }
+   
 
     //함수 이름: GameOver
     //기능: 스테이지 실패를 알리는 함수
@@ -196,6 +224,10 @@ public class StageManager : MonoBehaviour
         /* else 게임매니저의 글로벌 인벤토리에 추가 */
     }
 
+    /*   이벤트 체이닝 끝    */
+
+
+    // 적 스폰 관련 함수 (추후에 추가)
     public void ModifyDifficulty()
     {
         // enemy spawncost에 가중치를 부여
@@ -220,6 +252,7 @@ public class StageManager : MonoBehaviour
             SpawnRandomMap();
             Debug.Log("nextMap Loaded");
         }
+
         /*
         //맵의 최상단으로 이동 시 탈출 시도임을 확인
         if (PlayerTransform.position.y > -Threshold)
@@ -229,10 +262,10 @@ public class StageManager : MonoBehaviour
         */
     }
 
-    /*
+    /* 합칠 때 주석 해제
     private void OnDisable()
     {
-        // 이벤트 구독 해제
+        // 이벤트 구독 해제.
         player.OnDeath -= GameOver;
         player.OnEscape -= StageEscape;
         enemy.OnDeath -= CalcPoint;
