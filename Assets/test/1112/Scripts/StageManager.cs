@@ -65,30 +65,13 @@ public class StageManager : MonoBehaviour
     // 아이템을 보관하는 임시 인벤토리 생성
     private List<ItemData> tmpinventory = new List<ItemData>(); // 멀티플레이의 경우 딕셔너리 사용 <PID, List<ItemData>>
 
-    //함수 이름: GetItem
-    //기능: 획득한 아이템을 임시 인벤토리에 추가
-    //파라미터: ItemData item -> 인벤토리에 추가할 아이템
-    //반환값: X
-    public void GetItem(ItemData item)
-    {
-        if(item.id != "clear") tmpinventory.Add(item); // 멀티플레이 구현 시 동기화 처리해야
-        Debug.Log(item.id + " 획득");
-
-        if (item.id == "tmp") CheckTrigger = true; // id는 임시. 나중에 ItemData 클래스와 함께 수정 필요
-        if (item.id == "clear") // 클리어 처리 테스트용. "clear" id를 가진 아이템 필요
-        {
-            ClearAssurance(true);
-            StageClear(true); 
-        }
-    
-    }
-
     /* 합칠 때 주석 해제
     private void OnEnable()
     {
         // 다른 스크립트의 이벤트 구독
         player.OnDeath += GameOver;
         player.OnEscape += StageEscape;
+        player.OnGetItem += GetItem;
         enemy.OnDeath += CalcPoint;
         enemy.OnDeath += ClearAssurance;
         enemy.OnDeath += StageClear;
@@ -224,6 +207,25 @@ public class StageManager : MonoBehaviour
         /* else 게임매니저의 글로벌 인벤토리에 추가 */
     }
 
+
+    //함수 이름: GetItem
+    //기능: 획득한 아이템을 임시 인벤토리에 추가
+    //파라미터: ItemData item -> 인벤토리에 추가할 아이템
+    //반환값: X
+    public void GetItem(ItemData item)
+    {
+        if (item.id != "clear") tmpinventory.Add(item); // 멀티플레이 구현 시 동기화 처리해야
+        Debug.Log(item.id + " 획득");
+
+        if (item.id == "tmp") CheckTrigger = true; // id는 임시. 특정 지역을 지나기 위한 트리거 체크(필요 시)
+        if (item.id == "clear") // 클리어 처리 테스트용. "clear" id를 가진 아이템 필요
+        {
+            ClearAssurance(true);
+            StageClear(true);
+        }
+
+    }
+
     /*   이벤트 체이닝 끝    */
 
 
@@ -268,6 +270,7 @@ public class StageManager : MonoBehaviour
         // 이벤트 구독 해제.
         player.OnDeath -= GameOver;
         player.OnEscape -= StageEscape;
+        player.OnGetItem -= GetItem;
         enemy.OnDeath -= CalcPoint;
         enemy.OnDeath -= ClearAssurance;
         enemy.OnDeath -= StageClear;
